@@ -32,7 +32,7 @@ const LandingPage = () => {
               Welcome to Flamingo: Your One-Stop Destination
             </h2>
             
-            <div className="bg-white bg-opacity-80 p-6 md:p-8 rounded-lg max-w-3xl mx-auto">
+            {/* <div className="bg-white bg-opacity-80 p-6 md:p-8 rounded-lg max-w-3xl mx-auto">
               <p className="text-lg md:text-xl text-gray-800 mb-4">
                 Discover Flamingo, a unified brand featuring four distinct branches:
               </p>
@@ -42,7 +42,7 @@ const LandingPage = () => {
               <p className="text-lg md:text-xl text-gray-800">
                 Each branch is dedicated to providing exceptional products and services tailored to your everyday needs.
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
