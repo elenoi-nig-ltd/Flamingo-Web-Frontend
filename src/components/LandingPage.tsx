@@ -1,12 +1,10 @@
-// components/LandingPage.tsx
+
 import React from 'react';
-import Header from './Header';
 import Image from 'next/image';
 
 const LandingPage = () => {
   return (
     <div className="min-h-screen bg-white font-sans">
-      <Header />
       
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center">
@@ -28,7 +26,7 @@ const LandingPage = () => {
           <div className="max-w-4xl mx-auto">
             {/* Flamingo Logo/Text - Repeating as in your design */}
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-2">FLAMINGO</h1>
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-8">FLAMINGO</h1>
+         
             
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
               Welcome to Flamingo: Your One-Stop Destination
@@ -56,7 +54,7 @@ const LandingPage = () => {
             Explore Our Unique Offerings
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Food & Snacks */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
               <div className="p-6">
@@ -75,7 +73,7 @@ const LandingPage = () => {
               </div>
             </div>
 
-            {/* Home Goods */}
+            {/* Household section */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
               <div className="p-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-3">Quality Goods for Your Home</h3>
@@ -84,6 +82,19 @@ const LandingPage = () => {
                 </p>
                 <button className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition-colors">
                   Shop
+                </button>
+              </div>
+            </div>
+
+            {/* Home Goods */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow border border-gray-100">
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-3"> Real Estates</h3>
+                <p className="text-gray-600 mb-4">
+                  Explore our estates and lodges of your choice.
+                </p>
+                <button className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition-colors">
+                  Explore
                 </button>
               </div>
             </div>
