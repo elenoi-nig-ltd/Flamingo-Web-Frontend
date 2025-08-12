@@ -5,7 +5,7 @@ import { div } from 'framer-motion/client';
 export default function DashboardPage() {
   return (
       <>
-              <AdminDashboard />
+          <AdminDashboard />
       </>
 
    
