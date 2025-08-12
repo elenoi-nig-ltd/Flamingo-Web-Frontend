@@ -10,10 +10,10 @@ const Header = () => {
   const menuItems = {
     home: [],
     foodDrinks: [
-      { name: 'French Fries', href: '#' },
-      { name: 'Showarma', href: '#' },
-      { name: 'Burgers', href: '#' },
-      { name: 'Beverages', href: '#' },
+      { name: 'French Fries', href: '/food' },
+      { name: 'Showarma', href: '/food' },
+      { name: 'Burgers', href: '/food' },
+      { name: 'Beverages', href: '/food' },
     ],
     homeItems: [
       { name: 'Furniture', href: '#' },
