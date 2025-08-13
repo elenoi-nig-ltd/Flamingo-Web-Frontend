@@ -17,8 +17,14 @@ interface ProductFormData {
   images: string[];
 }
 
-// Extend the form errors type to include a general error
-interface FormErrors extends Partial<ProductFormData> {
+// Define FormErrors with string | undefined for all fields
+interface FormErrors {
+  name?: string;
+  description?: string;
+  price?: string;
+  category?: string;
+  stock?: string;
+  images?: string;
   general?: string;
 }
 
@@ -43,8 +49,8 @@ const ProductManagement = () => {
     if (!formData.name.trim()) errors.name = 'Name is required';
     if (!formData.category.trim()) errors.category = 'Category is required';
     if (!formData.description.trim()) errors.description = 'Description is required';
-    // if (formData.price <= 0) errors.price = 'Price must be greater than 0';
-    // if (formData.stock < 0) errors.stock = 'Stock cannot be negative';
+    if (formData.price <= 0) errors.price = 'Price must be greater than 0';
+    if (formData.stock < 0) errors.stock = 'Stock cannot be negative';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -52,7 +58,7 @@ const ProductManagement = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: name === 'price' || name === 'stock' ? Number(value) : value }));
-    setFormErrors((prev) => ({ ...prev, [name]: '' }));
+    setFormErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,9 +79,10 @@ const ProductManagement = () => {
 
       const imageUrl = response.data.secure_url;
       setFormData((prev) => ({ ...prev, images: [...prev.images, imageUrl] }));
+      setFormErrors((prev) => ({ ...prev, images: undefined }));
     } catch (err) {
       console.error('Image upload failed:', err);
-      // setFormErrors((prev) => ({ ...prev, images: 'Failed to upload image' }));
+      setFormErrors((prev) => ({ ...prev, images: 'Failed to upload image' }));
     } finally {
       setImageUploading(false);
     }
@@ -86,6 +93,7 @@ const ProductManagement = () => {
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
     }));
+    setFormErrors((prev) => ({ ...prev, images: undefined }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,6 +139,7 @@ const ProductManagement = () => {
       stock: product.stock,
       images: product.images,
     });
+    setFormErrors({});
   };
 
   const handleDelete = async (id: string) => {
@@ -172,7 +181,7 @@ const ProductManagement = () => {
 
       {/* Product Form */}
       <motion.div
-        className="bg-white p-8 rounded-xl shadow-lg mb-10 max-w-3xl mx-auto"
+        className="bg-white p-8 rounded-xl shadow-lg mb-10 w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
@@ -356,7 +365,7 @@ const ProductManagement = () => {
 
       {/* Product Table */}
       <motion.div
-        className="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto"
+        className="bg-white p-8 rounded-xl shadow-lg w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
