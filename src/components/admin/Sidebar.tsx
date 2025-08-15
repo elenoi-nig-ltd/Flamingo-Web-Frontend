@@ -23,7 +23,7 @@ export default function Sidebar() {
   
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const menuItems = [
-    { name: 'Users', icon: <FaUser />, path: '/dashboard?tab=users', active: true },
+    { name: 'Users', icon: <FaUser />, path: '/admin/dashboard/users', active: true },
     { name: 'Products', icon: <FaBox />, path: '/admin/dashboard/products', active: true },
     { name: 'Categories', icon: <FaTags />, path: '/admin/dashboard/categories', active: true },
     { name: 'Orders', icon: <FaShoppingCart />, path: '/admin/orders', active: false },
