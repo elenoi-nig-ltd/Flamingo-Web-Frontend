@@ -1,7 +1,18 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { FaUser, FaBox, FaSignOutAlt, FaShoppingCart, FaWarehouse, FaCreditCard, FaHome, FaNetworkWired, FaBullhorn, FaEnvelope } from 'react-icons/fa';
+import { FaUser, 
+  FaBox, 
+  FaSignOutAlt, 
+  FaShoppingCart, 
+  FaWarehouse, 
+  FaCreditCard, 
+  FaHome, 
+  FaNetworkWired, 
+  FaBullhorn, 
+  FaEnvelope,
+  FaTags
+ } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSidebar } from './SidebarContext';
 import { useState, useEffect } from 'react';
@@ -14,6 +25,7 @@ export default function Sidebar() {
   const menuItems = [
     { name: 'Users', icon: <FaUser />, path: '/dashboard?tab=users', active: true },
     { name: 'Products', icon: <FaBox />, path: '/admin/dashboard/products', active: true },
+    { name: 'Categories', icon: <FaTags />, path: '/admin/dashboard/categories', active: true },
     { name: 'Orders', icon: <FaShoppingCart />, path: '/admin/orders', active: false },
     { name: 'Inventory', icon: <FaWarehouse />, path: '/admin/inventory', active: false },
     { name: 'Payments', icon: <FaCreditCard />, path: '/admin/payments', active: false },
