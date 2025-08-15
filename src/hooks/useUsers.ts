@@ -1,224 +1,113 @@
-'use client';
-
 import { useState, useEffect } from 'react';
-import { useAuth } from './useAuth';
-import { getCookie } from 'cookies-next';
+import axios from 'axios';
 import { BASEURL } from '@/config/api/contants';
+export function getAuthToken() {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('token');
+}
 
 interface User {
   _id: string;
-  name: string;
+  username: string;
   email: string;
   role: string;
 }
 
 interface CreateUserDto {
-  name: string;
+  username: string;
   email: string;
   password: string;
   role: string;
 }
 
-interface UpdateUserDto {
-  name?: string;
-  email?: string;
-  password?: string;
-  role?: string;
-}
-
-export function getAuthToken() {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
-}
 export const useUsers = () => {
-  const { user, loading: authLoading } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper function to get user role from localStorage
-  const getUserRole = (): string | null => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        return parsedUser.role || null;
-      } catch (err) {
-        console.error('Error parsing stored user:', err);
-        return null;
-      }
-    }
-    return user?.role || null;
-  };
-
-  // Fetch all users
   const fetchUsers = async () => {
-    const role = getUserRole();
-    if (!role || role !== 'admin') {
-      setError('Unauthorized access');
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     try {
       const token = getAuthToken()
-      console.log('Fetching users with token:', token); // Debug: Log token
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      const response = await fetch(`${BASEURL}/users`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+      console.log("Token: ", token)
+      const response = await axios.get(`${BASEURL}/users`, {
+        headers: { Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+ },
+        
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch users');
-      }
-
-      const data = await response.json();
-      setUsers(data);
+      setUsers(response.data);
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'Failed to fetch users');
     } finally {
       setLoading(false);
     }
   };
 
-  // Create a user
-  const createUser = async (userData: CreateUserDto) => {
-    const role = getUserRole();
-    if (!role || role !== 'admin') {
-      setError('Unauthorized access');
-      return;
-    }
-
-    setLoading(true);
+  const createUser = async (userData: CreateUserDto): Promise<User> => {
     try {
-      const token = getCookie('token');
-      console.log('Creating user with token:', token); // Debug: Log token
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      const response = await fetch(`${BASEURL}/users`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-        credentials: 'include',
+      const response = await axios.post(`${BASEURL}/users`, userData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create user');
-      }
-
-      const newUser = await response.json();
-      setUsers([...users, newUser]);
-      return newUser;
+      setUsers((prev) => [...prev, response.data]);
+      setError(null);
+      return response.data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
+      throw new Error(err instanceof Error ? err.message : 'Failed to create user');
     }
   };
 
-  // Update a user
-  const updateUser = async (id: string, userData: UpdateUserDto) => {
-    const role = getUserRole();
-    if (!role || role !== 'admin') {
-      setError('Unauthorized access');
-      return;
-    }
-
-    setLoading(true);
+  const updateUser = async (id: string, userData: Partial<CreateUserDto>): Promise<User> => {
     try {
-      const token = getCookie('token');
-      console.log('Updating user with token:', token); // Debug: Log token
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      const response = await fetch(`${BASEURL}/users/${id}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-        credentials: 'include',
+      const response = await axios.put(`${BASEURL}/users/${id}`, userData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update user');
-      }
-
-      const updatedUser = await response.json();
-      setUsers(users.map((u) => (u._id === id ? updatedUser : u)));
-      return updatedUser;
+      setUsers((prev) =>
+        prev.map((user) => (user._id === id ? response.data : user))
+      );
+      setError(null);
+      return response.data;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
+      throw new Error(err instanceof Error ? err.message : 'Failed to update user');
     }
   };
 
-  // Delete a user
-  const deleteUser = async (id: string) => {
-    const role = getUserRole();
-    if (!role || role !== 'admin') {
-      setError('Unauthorized access');
-      return;
-    }
-
-    setLoading(true);
+  const deleteUser = async (id: string): Promise<void> => {
     try {
-      const token = getCookie('token');
-      console.log('Deleting user with token:', token); // Debug: Log token
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      const response = await fetch(`${BASEURL}/users/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
+      await axios.delete(`${BASEURL}/users/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to delete user');
-      }
-
-      setUsers(users.filter((u) => u._id !== id));
+      setUsers((prev) => prev.filter((user) => user._id !== id));
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
+      throw new Error(err instanceof Error ? err.message : 'Failed to delete user');
     }
   };
 
-  // Fetch users on mount and when user changes
+  const getUserById = async (id: string): Promise<User> => {
+    try {
+      const response = await axios.get(`${BASEURL}/users/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      setError(null);
+      return response.data;
+    } catch (err) {
+      throw new Error(err instanceof Error ? err.message : 'Failed to fetch user');
+    }
+  };
+
   useEffect(() => {
-    if (!authLoading) {
-      const role = getUserRole();
-      if (role === 'admin') {
-        fetchUsers();
-      } else {
-        setError('Admin access required');
-        setLoading(false);
-      }
-    }
-  }, [user, authLoading]);
+    fetchUsers();
+  }, []);
 
-  return { users, loading, error, createUser, updateUser, deleteUser };
+  return {
+    users,
+    loading,
+    error,
+    createUser,
+    updateUser,
+    deleteUser,
+    getUserById,
+  };
 };
