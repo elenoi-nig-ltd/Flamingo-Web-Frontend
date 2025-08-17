@@ -63,12 +63,12 @@ const LandingPage = () => {
                   Delicious meals and snacks for every craving. Savor our diverse menu featuring fries, showarma, and more for a delightful experience.
                 </p>
                 <div className="flex space-x-3">
-                  <button className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition-colors">
+                  <a href="/food" className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition-colors">
                     Order
-                  </button>
-                  <button className="border border-pink-600 text-pink-600 px-4 py-2 rounded hover:bg-pink-50 transition-colors">
+                  </a>
+                  <a href="/food" className="border border-pink-600 text-pink-600 px-4 py-2 rounded hover:bg-pink-50 transition-colors">
                     View
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
