@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
 
+// dummy
 interface FoodSidebarProps {
   isOpen: boolean;
   selectedCategory: string;
