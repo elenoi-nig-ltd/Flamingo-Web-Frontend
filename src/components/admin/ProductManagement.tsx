@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 import { useAuth } from '@/hooks/useAuth';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FaBox, FaPlus, FaEdit, FaTrash, FaSpinner, FaTimes } from 'react-icons/fa';
 import { DashboardSkeleton } from '../ui/SkeletonLoader';
 import axios from 'axios';
@@ -17,14 +18,20 @@ interface ProductFormData {
   images: string[];
 }
 
-// Extend the form errors type to include a general error
-interface FormErrors extends Partial<ProductFormData> {
+interface FormErrors {
+  name?: string;
+  description?: string;
+  price?: string;
+  category?: string;
+  stock?: string;
+  images?: string;
   general?: string;
 }
 
 const ProductManagement = () => {
   const { user, loading: authLoading } = useAuth();
-  const { products, loading, error, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { products, loading: productsLoading, error: productsError, createProduct, updateProduct, deleteProduct } = useProducts();
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [currentProductId, setCurrentProductId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
@@ -37,22 +44,24 @@ const ProductManagement = () => {
   });
   const [imageUploading, setImageUploading] = useState<boolean>(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   const validateForm = () => {
     const errors: FormErrors = {};
     if (!formData.name.trim()) errors.name = 'Name is required';
-    if (!formData.category.trim()) errors.category = 'Category is required';
+    if (!formData.category) errors.category = 'Category is required';
     if (!formData.description.trim()) errors.description = 'Description is required';
-    // if (formData.price <= 0) errors.price = 'Price must be greater than 0';
-    // if (formData.stock < 0) errors.stock = 'Stock cannot be negative';
+    if (formData.price <= 0) errors.price = 'Price must be greater than 0';
+    if (formData.stock < 0) errors.stock = 'Stock cannot be negative';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: name === 'price' || name === 'stock' ? Number(value) : value }));
-    setFormErrors((prev) => ({ ...prev, [name]: '' }));
+    setFormErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,16 +75,32 @@ const ProductManagement = () => {
       formData.append('file', file);
       formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
 
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || !process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) {
+        throw new Error('Cloudinary configuration is missing');
+      }
+
       const response = await axios.post(
         `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        formData
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
 
-      const imageUrl = response.data.secure_url;
-      setFormData((prev) => ({ ...prev, images: [...prev.images, imageUrl] }));
+      if (response.data.secure_url) {
+        setFormData((prev) => ({ ...prev, images: [...prev.images, response.data.secure_url] }));
+        setFormErrors((prev) => ({ ...prev, images: undefined }));
+      } else {
+        throw new Error('No secure URL returned from Cloudinary');
+      }
     } catch (err) {
       console.error('Image upload failed:', err);
-      // setFormErrors((prev) => ({ ...prev, images: 'Failed to upload image' }));
+      setFormErrors((prev) => ({
+        ...prev,
+        images: err instanceof Error ? err.message : 'Failed to upload image',
+      }));
     } finally {
       setImageUploading(false);
     }
@@ -86,6 +111,7 @@ const ProductManagement = () => {
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
     }));
+    setFormErrors((prev) => ({ ...prev, images: undefined }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,8 +135,6 @@ const ProductManagement = () => {
       } else {
         await createProduct(productData);
       }
-
-      // Reset form
       setFormData({ name: '', description: '', price: 0, category: '', stock: 0, images: [] });
       setIsEditing(false);
       setCurrentProductId(null);
@@ -131,22 +155,39 @@ const ProductManagement = () => {
       stock: product.stock,
       images: product.images,
     });
+    setFormErrors({});
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      await deleteProduct(id);
+  const handleDeleteClick = (id: string) => {
+    setProductToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (productToDelete) {
+      try {
+        await deleteProduct(productToDelete);
+      } catch (err) {
+        setFormErrors((prev) => ({ ...prev, general: 'Failed to delete product' }));
+      }
     }
+    setShowDeleteModal(false);
+    setProductToDelete(null);
   };
 
-  if (authLoading || loading) {
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setProductToDelete(null);
+  };
+
+  if (authLoading || productsLoading || categoriesLoading) {
     return <DashboardSkeleton />;
   }
 
-  if (error) {
+  if (productsError || categoriesError) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <p className="text-red-600 font-semibold">{error}</p>
+        <p className="text-red-600 font-semibold">{productsError || categoriesError}</p>
       </div>
     );
   }
@@ -172,7 +213,7 @@ const ProductManagement = () => {
 
       {/* Product Form */}
       <motion.div
-        className="bg-white p-8 rounded-xl shadow-lg mb-10 max-w-3xl mx-auto"
+        className="bg-white p-8 rounded-xl shadow-lg mb-10 w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
@@ -208,8 +249,7 @@ const ProductManagement = () => {
             <label htmlFor="category" className="block text-sm font-medium text-gray-600 mb-1">
               Category
             </label>
-            <input
-              type="text"
+            <select
               id="category"
               name="category"
               value={formData.category}
@@ -220,7 +260,14 @@ const ProductManagement = () => {
               required
               aria-invalid={formErrors.category ? 'true' : 'false'}
               aria-describedby={formErrors.category ? 'category-error' : undefined}
-            />
+            >
+              <option value="">Select a category</option>
+              {categories.map((category) => (
+                <option key={category._id} value={category._id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
             {formErrors.category && (
               <p id="category-error" className="text-red-500 text-sm mt-1">
                 {formErrors.category}
@@ -356,7 +403,7 @@ const ProductManagement = () => {
 
       {/* Product Table */}
       <motion.div
-        className="bg-white p-8 rounded-xl shadow-lg max-w-4xl mx-auto"
+        className="bg-white p-8 rounded-xl shadow-lg w-full"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
@@ -389,7 +436,7 @@ const ProductManagement = () => {
                     )}
                   </td>
                   <td className="py-3 px-4 font-medium text-gray-800">{product.name}</td>
-                  <td className="py-3 px-4 text-gray-600">{product.category}</td>
+                  <td className="py-3 px-4 text-gray-600">{(product.category as any).name}</td>
                   <td className="py-3 px-4 text-gray-600">${product.price.toFixed(2)}</td>
                   <td className="py-3 px-4 text-gray-600">{product.stock}</td>
                   <td className="py-3 px-4 flex space-x-3">
@@ -403,7 +450,7 @@ const ProductManagement = () => {
                       <FaEdit size={18} />
                     </motion.button>
                     <motion.button
-                      onClick={() => handleDelete(product._id)}
+                      onClick={() => handleDeleteClick(product._id)}
                       className="text-red-600 hover:text-red-800"
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
@@ -418,6 +465,52 @@ const ProductManagement = () => {
           </table>
         </div>
       </motion.div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl"
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.7, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h3 className="text-2xl font-semibold text-gray-800 mb-4">
+                Confirm Deletion
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this product? This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-4">
+                <motion.button
+                  onClick={handleDeleteCancel}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  onClick={handleDeleteConfirm}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Delete
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

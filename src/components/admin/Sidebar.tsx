@@ -1,7 +1,18 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { FaUser, FaBox, FaSignOutAlt, FaShoppingCart, FaWarehouse, FaCreditCard, FaHome, FaNetworkWired, FaBullhorn, FaEnvelope } from 'react-icons/fa';
+import { FaUser, 
+  FaBox, 
+  FaSignOutAlt, 
+  FaShoppingCart, 
+  FaWarehouse, 
+  FaCreditCard, 
+  FaHome, 
+  FaNetworkWired, 
+  FaBullhorn, 
+  FaEnvelope,
+  FaTags
+ } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSidebar } from './SidebarContext';
 import { useState, useEffect } from 'react';
@@ -12,10 +23,11 @@ export default function Sidebar() {
   
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const menuItems = [
-    { name: 'Users', icon: <FaUser />, path: '/dashboard?tab=users', active: true },
+    { name: 'Users', icon: <FaUser />, path: '/admin/dashboard/users', active: true },
     { name: 'Products', icon: <FaBox />, path: '/admin/dashboard/products', active: true },
-    { name: 'Orders', icon: <FaShoppingCart />, path: '/admin/orders', active: false },
-    { name: 'Inventory', icon: <FaWarehouse />, path: '/admin/inventory', active: false },
+    { name: 'Categories', icon: <FaTags />, path: '/admin/dashboard/categories', active: true },
+    { name: 'Orders', icon: <FaShoppingCart />, path: '/admin/dashboard/orders', active: true },
+    { name: 'Inventory', icon: <FaWarehouse />, path: '/admin/dashboard/inventory', active: true },
     { name: 'Payments', icon: <FaCreditCard />, path: '/admin/payments', active: false },
     { name: 'Real Estate', icon: <FaHome />, path: '/admin/real-estate', active: false },
     { name: 'Internet Packages', icon: <FaNetworkWired />, path: '/admin/internet-packages', active: false },
