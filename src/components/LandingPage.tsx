@@ -80,9 +80,14 @@ const LandingPage = () => {
                 <p className="text-gray-600 mb-4">
                   Everything you need for a comfortable living space.
                 </p>
-                <button className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition-colors">
-                  Shop
-                </button>
+                <div className="flex space-x-3">
+                  <a href="/home-items" className="bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition-colors">
+                    Shop
+                  </a>
+                  <a href="/home-items" className="border border-pink-600 text-pink-600 px-4 py-2 rounded hover:bg-pink-50 transition-colors">
+                    View
+                  </a>
+                </div>
               </div>
             </div>
 

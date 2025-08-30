@@ -19,10 +19,11 @@ const FoodSidebar = ({ isOpen, selectedCategory, onCategorySelect, onClose }: Fo
   // Fallback to hardcoded categories if API fails
   useEffect(() => {
     if (categories && categories.length > 0) {
-      setLocalCategories(categories.map(cat => cat.name));
+      setLocalCategories(['All', ...categories.map(cat => cat.name)]);
     } else if (!loading && !error) {
       // Fallback to hardcoded categories if no API data
       setLocalCategories([
+        'All',
         'Sharmawa',
         'Chicken and Chips',
         'Noodles',

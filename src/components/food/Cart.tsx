@@ -19,9 +19,10 @@ interface CartProps {
   onClose: () => void;
   onUpdateQuantity: (id: string, quantity: number) => void;
   onRemoveItem: (id: string) => void;
+  onClearCart?: () => void;
 }
 
-const Cart = ({ isOpen, items, totalPrice, onClose, onUpdateQuantity, onRemoveItem }: CartProps) => {
+const Cart = ({ isOpen, items, totalPrice, onClose, onUpdateQuantity, onRemoveItem, onClearCart }: CartProps) => {
   const handleQuantityChange = (id: string, newQuantity: number) => {
     if (newQuantity >= 1) {
       onUpdateQuantity(id, newQuantity);
@@ -31,7 +32,11 @@ const Cart = ({ isOpen, items, totalPrice, onClose, onUpdateQuantity, onRemoveIt
   };
 
   const clearCart = () => {
-    items.forEach(item => onRemoveItem(item.id));
+    if (onClearCart) {
+      onClearCart();
+    } else {
+      items.forEach(item => onRemoveItem(item.id));
+    }
   };
 
   return (
@@ -71,8 +76,19 @@ const Cart = ({ isOpen, items, totalPrice, onClose, onUpdateQuantity, onRemoveIt
               {items.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center p-6">
                   <div className="text-center">
-                    <p className="text-gray-400 text-lg">Your cart is empty</p>
-                    <p className="text-gray-500 text-sm mt-2">Add some delicious food to get started!</p>
+                    <div className="w-24 h-24 mx-auto mb-4 bg-gray-700 rounded-full flex items-center justify-center">
+                      <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m6 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-400 text-lg mb-2">Your cart is empty</p>
+                    <p className="text-gray-500 text-sm mb-4">Add some delicious food to get started!</p>
+                    <button
+                      onClick={onClose}
+                      className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                      Browse Menu
+                    </button>
                   </div>
                 </div>
               ) : (
@@ -152,7 +168,13 @@ const Cart = ({ isOpen, items, totalPrice, onClose, onUpdateQuantity, onRemoveIt
                     </div>
 
                     {/* Checkout Button */}
-                    <button className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-colors">
+                    <button 
+                      className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                      onClick={() => {
+                        // TODO: Implement checkout logic
+                        alert('Checkout functionality coming soon!');
+                      }}
+                    >
                       Proceed to Checkout
                     </button>
                   </div>

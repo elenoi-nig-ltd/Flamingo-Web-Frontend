@@ -67,7 +67,6 @@ export const useProducts = () => {
     setLoading(true);
     try {
       const token = getCookie('token');
-      console.log(token);
       const response = await fetch(`${BASEURL}/products`, {
         method: 'GET',
         headers: {

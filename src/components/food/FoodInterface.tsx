@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaSearch, FaBars, FaTimes } from 'react-icons/fa';
 import FoodSidebar from './FoodSidebar';
 import ProductGrid from './ProductGrid';
 import Cart from './Cart';
+import { useCart } from '@/hooks/useCart';
+import Toast from '@/components/ui/Toast';
 
 interface FoodInterfaceProps {
   // Add any props if needed
@@ -15,41 +17,61 @@ const FoodInterface: React.FC<FoodInterfaceProps> = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<Array<{ id: string; name: string; image: string; price: number; quantity: number }>>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'error' | 'info';
+    isVisible: boolean;
+  }>({
+    message: '',
+    type: 'info',
+    isVisible: false
+  });
+  
+  const {
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    totalItems,
+    totalPrice
+  } = useCart();
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
   };
 
   const handleAddToCart = (product: { id: string; name: string; image: string; price: number }) => {
-    setCartItems(prevItems => {
-      const existingItem = prevItems.find(item => item.id === product.id);
-      if (existingItem) {
-        return prevItems.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        return [...prevItems, { ...product, quantity: 1 }];
-      }
+    addToCart(product);
+    setToast({
+      message: `${product.name} added to cart!`,
+      type: 'success',
+      isVisible: true
     });
   };
 
   const handleRemoveFromCart = (productId: string) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
+    const item = cartItems.find(item => item.id === productId);
+    removeFromCart(productId);
+    if (item) {
+      setToast({
+        message: `${item.name} removed from cart`,
+        type: 'info',
+        isVisible: true
+      });
+    }
   };
 
   const handleUpdateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      handleRemoveFromCart(productId);
-    } else {
-      setCartItems(prevItems =>
-        prevItems.map(item =>
-          item.id === productId ? { ...item, quantity } : item
-        )
-      );
+    const item = cartItems.find(item => item.id === productId);
+    updateQuantity(productId, quantity);
+    if (item && quantity > 0) {
+      setToast({
+        message: `${item.name} quantity updated to ${quantity}`,
+        type: 'info',
+        isVisible: true
+      });
     }
   };
 
@@ -61,8 +83,40 @@ const FoodInterface: React.FC<FoodInterfaceProps> = () => {
     setIsCartOpen(!isCartOpen);
   };
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Ctrl/Cmd + K to focus search
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        const searchInput = document.querySelector('input[placeholder="Search for food..."]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+      
+      // Escape to close cart/sidebar
+      if (event.key === 'Escape') {
+        if (isCartOpen) {
+          setIsCartOpen(false);
+        }
+        if (isSidebarOpen) {
+          setIsSidebarOpen(false);
+        }
+      }
+      
+      // Ctrl/Cmd + B to toggle cart
+      if ((event.ctrlKey || event.metaKey) && event.key === 'b') {
+        event.preventDefault();
+        setIsCartOpen(!isCartOpen);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [isCartOpen, isSidebarOpen]);
+
+
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -96,6 +150,11 @@ const FoodInterface: React.FC<FoodInterfaceProps> = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                 />
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <kbd className="hidden sm:inline-block bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded border">
+                    ⌘K
+                  </kbd>
+                </div>
               </div>
             </div>
 
@@ -161,6 +220,15 @@ const FoodInterface: React.FC<FoodInterfaceProps> = () => {
         onClose={() => setIsCartOpen(false)}
         onRemoveItem={handleRemoveFromCart}
         onUpdateQuantity={handleUpdateQuantity}
+        onClearCart={clearCart}
+      />
+      
+      {/* Toast Notifications */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
       />
     </div>
   );

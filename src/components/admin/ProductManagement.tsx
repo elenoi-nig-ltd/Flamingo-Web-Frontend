@@ -67,6 +67,7 @@ const ProductManagement = () => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    console.log('files for image upload', files);
 
     setImageUploading(true);
     try {
@@ -88,6 +89,7 @@ const ProductManagement = () => {
           },
         }
       );
+      console.log('response for image upload', response);
 
       if (response.data.secure_url) {
         setFormData((prev) => ({ ...prev, images: [...prev.images, response.data.secure_url] }));
@@ -115,6 +117,7 @@ const ProductManagement = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('form data for submit', formData);
     e.preventDefault();
     if (!user || user.role !== 'admin') return;
 
@@ -128,6 +131,7 @@ const ProductManagement = () => {
       stock: formData.stock,
       images: formData.images,
     };
+    console.log('product data for submit', productData);
 
     try {
       if (isEditing && currentProductId) {
