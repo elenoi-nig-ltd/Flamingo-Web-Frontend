@@ -14,7 +14,7 @@ interface User {
 }
 
 interface AuthResponse {
-  token: string;
+  access_token: string;
   user: User;
 }
 
@@ -90,6 +90,7 @@ export const useAuth = () => {
         body: JSON.stringify({ email, password }),
         credentials: 'include',
       });
+      console.log(response);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -98,7 +99,7 @@ export const useAuth = () => {
 
       const data: AuthResponse = await response.json();
       setUser(data.user);
-      setCookie('token', data.token, { maxAge: 60 * 60 * 24 });
+      setCookie('token', data.access_token, { maxAge: 60 * 60 * 24 });
       localStorage.setItem('user', JSON.stringify(data.user)); // Store user in localStorage
       router.push('/admin/dashboard');
     } catch (err) {
@@ -129,7 +130,7 @@ export const useAuth = () => {
 
       const data: AuthResponse = await response.json();
       setUser(data.user);
-      setCookie('token', data.token, { maxAge: 60 * 60 * 24 });
+      setCookie('token', data.access_token, { maxAge: 60 * 60 * 24 });
       localStorage.setItem('user', JSON.stringify(data.user)); // Store user in localStorage
       router.push('/admin/dashboard');
     } catch (err) {

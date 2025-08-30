@@ -185,7 +185,7 @@ const OrdersManagement = () => {
         </h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="userId" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="userId" className="block text-sm font-medium text-gray-700 mb-1">
               User ID
             </label>
             <input
@@ -194,7 +194,7 @@ const OrdersManagement = () => {
               name="userId"
               value={formData.userId}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.userId ? 'border-red-500' : 'border-gray-300'
               }`}
               required
@@ -209,7 +209,7 @@ const OrdersManagement = () => {
             )}
           </div>
           <div>
-            <label htmlFor="totalAmount" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="totalAmount" className="block text-sm font-medium text-gray-700 mb-1">
               Total Amount ($)
             </label>
             <input
@@ -218,7 +218,7 @@ const OrdersManagement = () => {
               name="totalAmount"
               value={formData.totalAmount}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.totalAmount ? 'border-red-500' : 'border-gray-300'
               }`}
               required
@@ -235,7 +235,7 @@ const OrdersManagement = () => {
             )}
           </div>
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
               Status
             </label>
             <select
@@ -243,18 +243,18 @@ const OrdersManagement = () => {
               name="status"
               value={formData.status}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.status ? 'border-red-500' : 'border-gray-300'
               }`}
               required
               aria-invalid={formErrors.status ? 'true' : 'false'}
               aria-describedby={formErrors.status ? 'status-error' : undefined}
             >
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="pending" className="text-gray-900">Pending</option>
+              <option value="processing" className="text-gray-900">Processing</option>
+              <option value="shipped" className="text-gray-900">Shipped</option>
+              <option value="delivered" className="text-gray-900">Delivered</option>
+              <option value="cancelled" className="text-gray-900">Cancelled</option>
             </select>
             {formErrors.status && (
               <p id="status-error" className="text-red-500 text-sm mt-1">
@@ -263,14 +263,14 @@ const OrdersManagement = () => {
             )}
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-600 mb-1">Order Items</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Order Items</label>
             {formData.items.map((item, index) => (
               <div key={index} className="flex items-center space-x-4 mb-4">
                 <select
                   name="product"
                   value={item.product}
                   onChange={(e) => handleItemChange(index, 'product', e.target.value)}
-                  className={`flex-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+                  className={`flex-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                     formErrors.items ? 'border-red-500' : 'border-gray-300'
                   }`}
                   disabled={isEditing}
@@ -288,7 +288,7 @@ const OrdersManagement = () => {
                   name="quantity"
                   value={item.quantity}
                   onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                  className={`w-24 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+                  className={`w-24 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                     formErrors.items ? 'border-red-500' : 'border-gray-300'
                   }`}
                   disabled={isEditing}
@@ -352,26 +352,26 @@ const OrdersManagement = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50">
-                <th className="py-3 px-4 text-left text-gray-600">Order ID</th>
-                <th className="py-3 px-4 text-left text-gray-600">User ID</th>
-                <th className="py-3 px-4 text-left text-gray-600">Items</th>
-                <th className="py-3 px-4 text-left text-gray-600">Total Amount</th>
-                <th className="py-3 px-4 text-left text-gray-600">Status</th>
-                <th className="py-3 px-4 text-left text-gray-600">Order Date</th>
-                <th className="py-3 px-4 text-left text-gray-600">Actions</th>
+                <th className="py-3 px-4 text-left text-gray-800">Order ID</th>
+                <th className="py-3 px-4 text-left text-gray-800">User ID</th>
+                <th className="py-3 px-4 text-left text-gray-800">Items</th>
+                <th className="py-3 px-4 text-left text-gray-800">Total Amount</th>
+                <th className="py-3 px-4 text-left text-gray-800">Status</th>
+                <th className="py-3 px-4 text-left text-gray-800">Order Date</th>
+                <th className="py-3 px-4 text-left text-gray-800">Actions</th>
               </tr>
             </thead>
             <tbody>
               {orders.map((order) => (
                 <tr key={order._id} className="border-b hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-4 font-medium text-gray-800">{order._id}</td>
-                  <td className="py-3 px-4 text-gray-600">{order.userId}</td>
-                  <td className="py-3 px-4 text-gray-600">
+                  <td className="py-3 px-4 text-gray-700">{order.userId}</td>
+                  <td className="py-3 px-4 text-gray-700">
                     {order.items.map((item) => `${item.product.name} (x${item.quantity})`).join(', ')}
                   </td>
-                  <td className="py-3 px-4 text-gray-600">${order.totalAmount.toFixed(2)}</td>
-                  <td className="py-3 px-4 text-gray-600">{order.status.replace('_', ' ')}</td>
-                  <td className="py-3 px-4 text-gray-600">
+                  <td className="py-3 px-4 text-gray-700">${order.totalAmount.toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-700">{order.status.replace('_', ' ')}</td>
+                  <td className="py-3 px-4 text-gray-700">
                     {new Date(order.orderDate).toLocaleDateString()}
                   </td>
                   <td className="py-3 px-4 flex space-x-3">
@@ -421,7 +421,7 @@ const OrdersManagement = () => {
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">
                 Confirm Deletion
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-700 mb-6">
                 Are you sure you want to delete this order? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-4">

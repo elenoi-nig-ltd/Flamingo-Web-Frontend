@@ -205,18 +205,18 @@ const UserManagement = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50">
-                <th className="py-3 px-4 text-left text-gray-600">Username</th>
-                <th className="py-3 px-4 text-left text-gray-600">Email</th>
-                <th className="py-3 px-4 text-left text-gray-600">Role</th>
-                <th className="py-3 px-4 text-left text-gray-600">Actions</th>
+                <th className="py-3 px-4 text-left text-gray-800">Username</th>
+                <th className="py-3 px-4 text-left text-gray-800">Email</th>
+                <th className="py-3 px-4 text-left text-gray-800">Role</th>
+                <th className="py-3 px-4 text-left text-gray-800">Actions</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user: User) => (
                 <tr key={user._id} className="border-b hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-4 font-medium text-gray-800">{user.username}</td>
-                  <td className="py-3 px-4 text-gray-600">{user.email}</td>
-                  <td className="py-3 px-4 text-gray-600">{user.role}</td>
+                  <td className="py-3 px-4 text-gray-700">{user.email}</td>
+                  <td className="py-3 px-4 text-gray-700">{user.role}</td>
                   <td className="py-3 px-4 flex space-x-3">
                     <motion.button
                       onClick={() => handleEdit(user)}

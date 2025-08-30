@@ -146,7 +146,7 @@ const CategoryManagement = () => {
         </h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
               Category Name
             </label>
             <input
@@ -155,7 +155,7 @@ const CategoryManagement = () => {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.name ? 'border-red-500' : 'border-gray-300'
               }`}
               required
@@ -169,7 +169,7 @@ const CategoryManagement = () => {
             )}
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
             <textarea
@@ -177,7 +177,7 @@ const CategoryManagement = () => {
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors resize-y h-32 ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors resize-y h-32 text-gray-900 ${
                 formErrors.description ? 'border-red-500' : 'border-gray-300'
               }`}
               required
@@ -217,16 +217,16 @@ const CategoryManagement = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50">
-                <th className="py-3 px-4 text-left text-gray-600">Name</th>
-                <th className="py-3 px-4 text-left text-gray-600">Description</th>
-                <th className="py-3 px-4 text-left text-gray-600">Actions</th>
+                <th className="py-3 px-4 text-left text-gray-800">Name</th>
+                <th className="py-3 px-4 text-left text-gray-800">Description</th>
+                <th className="py-3 px-4 text-left text-gray-800">Actions</th>
               </tr>
             </thead>
             <tbody>
               {categories.map((category) => (
                 <tr key={category._id} className="border-b hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-4 font-medium text-gray-800">{category.name}</td>
-                  <td className="py-3 px-4 text-gray-600">{category.description}</td>
+                  <td className="py-3 px-4 text-gray-700">{category.description}</td>
                   <td className="py-3 px-4 flex space-x-3">
                     <motion.button
                       onClick={() => handleEdit(category)}
@@ -274,7 +274,7 @@ const CategoryManagement = () => {
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">
                 Confirm Deletion
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-700 mb-6">
                 Are you sure you want to delete this category? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-4">

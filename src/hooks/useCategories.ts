@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASEURL } from '@/config/api/contants';
+import { getAuthHeaders } from '@/utils/auth';
 
 interface Category {
   _id: string;
@@ -21,7 +22,8 @@ export const useCategories = () => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${BASEURL}/categories`);
+      const headers = getAuthHeaders();
+      const response = await axios.get(`${BASEURL}/categories`, { headers });
       setCategories(response.data);
       setError(null);
     } catch (err) {
@@ -33,7 +35,10 @@ export const useCategories = () => {
 
   const createCategory = async (categoryData: CategoryFormData): Promise<Category> => {
     try {
-      const response = await axios.post(`${BASEURL}/categories`, categoryData);
+      const headers = getAuthHeaders();
+      console.log('headers for create category', headers);
+      const response = await axios.post(`${BASEURL}/categories`, categoryData, { headers });
+      console.log('response for create category', response.data);
       setCategories((prev) => [...prev, response.data]);
       setError(null);
       return response.data;
@@ -44,7 +49,8 @@ export const useCategories = () => {
 
   const updateCategory = async (id: string, categoryData: CategoryFormData): Promise<Category> => {
     try {
-      const response = await axios.put(`${BASEURL}/categories/${id}`, categoryData);
+      const headers = getAuthHeaders();
+      const response = await axios.put(`${BASEURL}/categories/${id}`, categoryData, { headers });
       setCategories((prev) =>
         prev.map((category) => (category._id === id ? response.data : category))
       );
@@ -57,7 +63,8 @@ export const useCategories = () => {
 
   const deleteCategory = async (id: string): Promise<void> => {
     try {
-      await axios.delete(`${BASEURL}/categories/${id}`);
+      const headers = getAuthHeaders();
+      await axios.delete(`${BASEURL}/categories/${id}`, { headers });
       setCategories((prev) => prev.filter((category) => category._id !== id));
       setError(null);
     } catch (err) {
@@ -67,7 +74,8 @@ export const useCategories = () => {
 
   const getCategoryById = async (id: string): Promise<Category> => {
     try {
-      const response = await axios.get(`${BASEURL}/categories/${id}`);
+      const headers = getAuthHeaders();
+      const response = await axios.get(`${BASEURL}/categories/${id}`, { headers });
       setError(null);
       return response.data;
     } catch (err) {

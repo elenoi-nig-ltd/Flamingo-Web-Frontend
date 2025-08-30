@@ -223,7 +223,7 @@ const ProductManagement = () => {
         </h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
               Product Name
             </label>
             <input
@@ -232,7 +232,7 @@ const ProductManagement = () => {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.name ? 'border-red-500' : 'border-gray-300'
               }`}
               required
@@ -246,7 +246,7 @@ const ProductManagement = () => {
             )}
           </div>
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
               Category
             </label>
             <select
@@ -254,16 +254,16 @@ const ProductManagement = () => {
               name="category"
               value={formData.category}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.category ? 'border-red-500' : 'border-gray-300'
               }`}
               required
               aria-invalid={formErrors.category ? 'true' : 'false'}
               aria-describedby={formErrors.category ? 'category-error' : undefined}
             >
-              <option value="">Select a category</option>
+              <option value="" className="text-gray-900">Select a category</option>
               {categories.map((category) => (
-                <option key={category._id} value={category._id}>
+                <option key={category._id} value={category._id} className="text-gray-900">
                   {category.name}
                 </option>
               ))}
@@ -275,7 +275,7 @@ const ProductManagement = () => {
             )}
           </div>
           <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
               Price ($)
             </label>
             <input
@@ -284,7 +284,7 @@ const ProductManagement = () => {
               name="price"
               value={formData.price}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.price ? 'border-red-500' : 'border-gray-300'
               }`}
               required
@@ -300,7 +300,7 @@ const ProductManagement = () => {
             )}
           </div>
           <div>
-            <label htmlFor="stock" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-1">
               Stock
             </label>
             <input
@@ -309,7 +309,7 @@ const ProductManagement = () => {
               name="stock"
               value={formData.stock}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.stock ? 'border-red-500' : 'border-gray-300'
               }`}
               required
@@ -324,7 +324,7 @@ const ProductManagement = () => {
             )}
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
               Description
             </label>
             <textarea
@@ -332,7 +332,7 @@ const ProductManagement = () => {
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors resize-y h-32 ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors resize-y h-32 text-gray-900 ${
                 formErrors.description ? 'border-red-500' : 'border-gray-300'
               }`}
               required
@@ -346,7 +346,7 @@ const ProductManagement = () => {
             )}
           </div>
           <div className="md:col-span-2">
-            <label htmlFor="images" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-1">
               Upload Images
             </label>
             <div className="flex items-center space-x-4">
@@ -355,7 +355,7 @@ const ProductManagement = () => {
                 id="images"
                 accept="image/*"
                 onChange={handleImageUpload}
-                className="w-full p-3 border rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
+                className="w-full p-3 border rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 text-gray-900"
                 disabled={imageUploading}
               />
               {imageUploading && <FaSpinner className="animate-spin text-blue-500" />}
@@ -413,12 +413,12 @@ const ProductManagement = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50">
-                <th className="py-3 px-4 text-left text-gray-600">Image</th>
-                <th className="py-3 px-4 text-left text-gray-600">Name</th>
-                <th className="py-3 px-4 text-left text-gray-600">Category</th>
-                <th className="py-3 px-4 text-left text-gray-600">Price</th>
-                <th className="py-3 px-4 text-left text-gray-600">Stock</th>
-                <th className="py-3 px-4 text-left text-gray-600">Actions</th>
+                <th className="py-3 px-4 text-left text-gray-800">Image</th>
+                <th className="py-3 px-4 text-left text-gray-800">Name</th>
+                <th className="py-3 px-4 text-left text-gray-800">Category</th>
+                <th className="py-3 px-4 text-left text-gray-800">Price</th>
+                <th className="py-3 px-4 text-left text-gray-800">Stock</th>
+                <th className="py-3 px-4 text-left text-gray-800">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -436,9 +436,9 @@ const ProductManagement = () => {
                     )}
                   </td>
                   <td className="py-3 px-4 font-medium text-gray-800">{product.name}</td>
-                  <td className="py-3 px-4 text-gray-600">{(product.category as any).name}</td>
-                  <td className="py-3 px-4 text-gray-600">${product.price.toFixed(2)}</td>
-                  <td className="py-3 px-4 text-gray-600">{product.stock}</td>
+                  <td className="py-3 px-4 text-gray-700">{(product.category as any).name}</td>
+                  <td className="py-3 px-4 text-gray-700">${product.price.toFixed(2)}</td>
+                  <td className="py-3 px-4 text-gray-700">{product.stock}</td>
                   <td className="py-3 px-4 flex space-x-3">
                     <motion.button
                       onClick={() => handleEdit(product)}
@@ -486,7 +486,7 @@ const ProductManagement = () => {
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">
                 Confirm Deletion
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-700 mb-6">
                 Are you sure you want to delete this product? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-4">

@@ -156,7 +156,7 @@ const InventoryManagement = () => {
         </h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="product" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="product" className="block text-sm font-medium text-gray-700 mb-1">
               Product
             </label>
             <select
@@ -164,16 +164,16 @@ const InventoryManagement = () => {
               name="product"
               value={formData.product}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.product ? 'border-red-500' : 'border-gray-300'
               }`}
               required
               aria-invalid={formErrors.product ? 'true' : 'false'}
               aria-describedby={formErrors.product ? 'product-error' : undefined}
             >
-              <option value="">Select a product</option>
+              <option value="" className="text-gray-900">Select a product</option>
               {products.map((product) => (
-                <option key={product._id} value={product._id}>
+                <option key={product._id} value={product._id} className="text-gray-900">
                   {product.name}
                 </option>
               ))}
@@ -185,7 +185,7 @@ const InventoryManagement = () => {
             )}
           </div>
           <div>
-            <label htmlFor="quantity" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
               Quantity
             </label>
             <input
@@ -194,7 +194,7 @@ const InventoryManagement = () => {
               name="quantity"
               value={formData.quantity}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.quantity ? 'border-red-500' : 'border-gray-300'
               }`}
               required
@@ -209,7 +209,7 @@ const InventoryManagement = () => {
             )}
           </div>
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-600 mb-1">
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
               Status
             </label>
             <select
@@ -217,16 +217,17 @@ const InventoryManagement = () => {
               name="status"
               value={formData.status}
               onChange={handleInputChange}
-              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors ${
+              className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-colors text-gray-900 ${
                 formErrors.status ? 'border-red-500' : 'border-gray-300'
               }`}
               required
               aria-invalid={formErrors.status ? 'true' : 'false'}
               aria-describedby={formErrors.status ? 'status-error' : undefined}
             >
-              <option value="in_stock">In Stock</option>
-              <option value="low_stock">Low Stock</option>
-              <option value="out_of_stock">Out of Stock</option>
+              <option value="" className="text-gray-900">Select status</option>
+              <option value="in_stock" className="text-gray-900">In Stock</option>
+              <option value="low_stock" className="text-gray-900">Low Stock</option>
+              <option value="out_of_stock" className="text-gray-900">Out of Stock</option>
             </select>
             {formErrors.status && (
               <p id="status-error" className="text-red-500 text-sm mt-1">
@@ -261,20 +262,20 @@ const InventoryManagement = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50">
-                <th className="py-3 px-4 text-left text-gray-600">Product</th>
-                <th className="py-3 px-4 text-left text-gray-600">Quantity</th>
-                <th className="py-3 px-4 text-left text-gray-600">Status</th>
-                <th className="py-3 px-4 text-left text-gray-600">Last Updated</th>
-                <th className="py-3 px-4 text-left text-gray-600">Actions</th>
+                <th className="py-3 px-4 text-left text-gray-800">Product</th>
+                <th className="py-3 px-4 text-left text-gray-800">Quantity</th>
+                <th className="py-3 px-4 text-left text-gray-800">Status</th>
+                <th className="py-3 px-4 text-left text-gray-800">Last Updated</th>
+                <th className="py-3 px-4 text-left text-gray-800">Actions</th>
               </tr>
             </thead>
             <tbody>
               {inventory.map((item) => (
                 <tr key={item._id} className="border-b hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-4 font-medium text-gray-800">{item.product.name}</td>
-                  <td className="py-3 px-4 text-gray-600">{item.quantity}</td>
-                  <td className="py-3 px-4 text-gray-600">{item.status.replace('_', ' ')}</td>
-                  <td className="py-3 px-4 text-gray-600">
+                  <td className="py-3 px-4 text-gray-700">{item.quantity}</td>
+                  <td className="py-3 px-4 text-gray-700">{item.status.replace('_', ' ')}</td>
+                  <td className="py-3 px-4 text-gray-700">
                     {new Date(item.lastUpdated).toLocaleDateString()}
                   </td>
                   <td className="py-3 px-4 flex space-x-3">
@@ -324,8 +325,8 @@ const InventoryManagement = () => {
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">
                 Confirm Deletion
               </h3>
-              <p className="text-gray-600 mb-6">
-                Are you sure you want to delete this inventory entry? This action cannot be undone.
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to delete this inventory item? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-4">
                 <motion.button
