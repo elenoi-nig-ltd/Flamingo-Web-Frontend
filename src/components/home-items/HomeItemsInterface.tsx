@@ -6,7 +6,7 @@ import { FaBars, FaTimes } from 'react-icons/fa';
 import ShopSidebar from '@/components/shop/ShopSidebar';
 import ShopProductGrid from '@/components/shop/ShopProductGrid';
 import ShopHeader from '@/components/shop/ShopHeader';
-import Cart from './Cart';
+import Cart from '../food/Cart';
 import { useCart } from '@/hooks/useCart';
 import Toast from '@/components/ui/Toast';
 import { useCategories } from '@/hooks/useCategories';
@@ -173,6 +173,7 @@ const HomeItemsInterface: React.FC<HomeItemsInterfaceProps> = () => {
         onRemoveItem={handleRemoveFromCart}
         onUpdateQuantity={handleUpdateQuantity}
         onClearCart={clearCart}
+        orderType="home-items"
       />
       
       {/* Toast Notifications */}
