@@ -2,14 +2,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useInternet } from '@/hooks/useInternet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaTicketAlt, 
-  FaPlus, 
-  FaEdit, 
-  FaTrash, 
-  FaSpinner, 
-  FaCopy, 
-  FaFilePdf, 
+import {
+  FaTicketAlt,
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaSpinner,
+  FaCopy,
+  FaFilePdf,
   FaUpload,
   FaCheckCircle,
   FaChevronLeft,
@@ -37,6 +37,7 @@ const VoucherManagement = () => {
     error,
     createVoucher,
     createBulkVouchers,
+    uploadVoucherPdf,
     getVouchers,
     getDataPlans,
     updateVoucher,
@@ -88,11 +89,11 @@ const VoucherManagement = () => {
   const filteredVouchers = vouchers.filter(voucher => {
     const matchesSearch = voucher.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          voucher.plan?.bundle?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = filterStatus === 'all' ||
                (filterStatus === 'active' && !voucher.used) ||
                (filterStatus === 'used' && voucher.used);
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -170,12 +171,12 @@ const VoucherManagement = () => {
       if (editingVoucher) {
         result = await updateVoucher(editingVoucher, { plan: voucherForm.plan });
         toast.success('Voucher updated successfully');
-      } 
+      }
       else if (voucherForm.mode === 'bulk') {
         result = await createBulkVouchers({ codes: voucherForm.codes!, plan: voucherForm.plan });
         setBulkCodes(result.data.map((v: any) => v.code));
         toast.success(`${result.message || 'Bulk vouchers created successfully'}`);
-      } 
+      }
       else if (voucherForm.mode === 'single') {
         result = await createVoucher({ code: voucherForm.code!.trim(), plan: voucherForm.plan });
         setBulkCodes([result.code]);
@@ -203,34 +204,26 @@ const VoucherManagement = () => {
     setUploadingPdf(true);
     setVoucherErrors({});
 
-    const formData = new FormData();
-    formData.append('pdfFile', voucherForm.pdfFile);
-    formData.append('plan', voucherForm.plan);
-
-    const token = localStorage.getItem('token');
-
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL_II}/upload-pdf`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
+      const data = await uploadVoucherPdf({
+        plan: voucherForm.plan,
+        pdfFile: voucherForm.pdfFile,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || 'Upload failed');
-      }
 
       setPdfUploadResult(data);
       setBulkCodes(data.codes || []);
-      toast.success(`Successfully extracted and created ${data.total_codes} vouchers from PDF!`);
+      toast.success(
+        `Created ${data.total_codes} vouchers from PDF` +
+          (data.skipped ? ` (${data.skipped} duplicates skipped)` : ''),
+      );
 
       const res = await getVouchers();
       setVouchers(res?.data || []);
-      resetVoucherForm();
+
+      // Reset only the form fields. Calling resetVoucherForm() here would
+      // wipe pdfUploadResult and bulkCodes, so the success panel never showed.
+      setVoucherForm({ plan: '', mode: 'pdf', pdfFile: null });
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {
       const errorMsg = err.message || 'Failed to upload and process PDF';
       setVoucherErrors({ general: errorMsg });
@@ -577,7 +570,7 @@ const VoucherManagement = () => {
           <div className="md:col-span-2 flex space-x-4">
             <motion.button
               type="submit"
-              disabled={loading || uploadingPdf || !voucherForm.plan || 
+              disabled={loading || uploadingPdf || !voucherForm.plan ||
                 (voucherForm.mode === 'single' && !voucherForm.code?.trim()) ||
                 (voucherForm.mode === 'bulk' && !voucherForm.codes?.trim()) ||
                 (voucherForm.mode === 'pdf' && !voucherForm.pdfFile)}
@@ -632,7 +625,13 @@ const VoucherManagement = () => {
                     PDF Upload Successful!
                   </h3>
                   <div className="mt-3 space-y-1 text-green-700 dark:text-green-300">
-                    <p>Extracted <strong>{pdfUploadResult.total_codes}</strong> voucher codes</p>
+                    <p>
+                      Found <strong>{pdfUploadResult.found}</strong> codes,{' '}
+                      <strong>{pdfUploadResult.total_codes}</strong> new
+                      {pdfUploadResult.skipped > 0 && (
+                        <> ({pdfUploadResult.skipped} already existed)</>
+                      )}
+                    </p>
                     <p>File: <strong>{pdfUploadResult.filename}</strong></p>
                     <p>Plan: <strong>{pdfUploadResult.plan_details?.bundle}</strong> ({pdfUploadResult.plan_details?.dataAmount}GB)</p>
                   </div>
@@ -695,7 +694,7 @@ const VoucherManagement = () => {
                   {filterStatus !== 'all' && ` (filtered by ${filterStatus})`}
                 </p>
               </div>
-              
+
               {/* Filters */}
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                 {/* Search Input */}
@@ -787,14 +786,14 @@ const VoucherManagement = () => {
                   </td>
                   <td className="py-4 px-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      voucher.used 
+                      voucher.used
                         ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200'
                         : 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200'
                     }`}>
                       {voucher.used ? 'Used' : 'Active'}
                     </span>
                   </td>
-                 
+
                   <td className="py-4 px-4 text-sm text-gray-600">
                     {new Date(voucher.createdAt).toLocaleDateString()}
                   </td>
@@ -828,7 +827,7 @@ const VoucherManagement = () => {
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Showing {startIndex + 1} to {Math.min(endIndex, filteredVouchers.length)} of {filteredVouchers.length} entries
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   {/* Previous Button */}
                   <motion.button

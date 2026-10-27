@@ -51,23 +51,38 @@ interface QueryParams {
   limit?: number;
 }
 
+export interface PdfUploadResult {
+  total_codes: number;
+  found: number;
+  skipped: number;
+  codes: string[];
+  filename: string;
+  plan_details: {
+    bundle: string;
+    dataAmount: number;
+    duration: number;
+    price: number;
+    location: any;
+  };
+}
+
 const extractErrorMessage = (errorData: any, status?: number): string => {
   if (status === 401) return 'Unauthorized access';
   if (typeof errorData === 'string') return errorData;
   if (errorData instanceof Error) return errorData.message;
-  
+
   if (errorData?.message) {
-    return Array.isArray(errorData.message) 
-      ? errorData.message.join(', ') 
+    return Array.isArray(errorData.message)
+      ? errorData.message.join(', ')
       : errorData.message;
   }
-  
+
   return 'An unexpected error occurred';
 };
 
 const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');
-  
+
   const response = await fetch(`${BASEURL}/internet${endpoint}`, {
     ...options,
     headers: {
@@ -221,7 +236,7 @@ export const useInternet = () => {
     }
   }, []);
 
-const createBulkVouchers = useCallback(async (data: { codes: string; plan: string }) => {
+  const createBulkVouchers = useCallback(async (data: { codes: string; plan: string }) => {
     setLoading(true);
     setError(null);
     try {
@@ -234,20 +249,49 @@ const createBulkVouchers = useCallback(async (data: { codes: string; plan: strin
     }
   }, []);
 
-// In your useInternet hook, update the getVouchers function:
-const getVouchers = useCallback(async (query: QueryParams = {}) => {
-  setLoading(true);
-  setError(null);
-  try {
-    const params = new URLSearchParams();
-    if (query.page) params.append('page', query.page.toString());
-    if (query.limit) params.append('limit', query.limit.toString());
-    // Remove default limit to get all vouchers for frontend pagination
-    return await apiCall(`/vouchers${params.toString() ? `?${params.toString()}` : ''}`);
-  } finally {
-    setLoading(false);
-  }
-}, []);
+  // Upload a PDF, extract the 6-digit voucher codes server-side and save them
+  const uploadVoucherPdf = useCallback(
+    async (data: { plan: string; pdfFile: File }): Promise<PdfUploadResult> => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append('pdfFile', data.pdfFile);
+        formData.append('plan', data.plan);
+
+        // No Content-Type header: the browser sets the multipart boundary itself
+        const response = await fetch(`${BASEURL}/internet/vouchers/upload-pdf`, {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          body: formData,
+        });
+
+        const json = await response.json();
+        if (!response.ok) {
+          throw new Error(extractErrorMessage(json, response.status));
+        }
+        return json as PdfUploadResult;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  const getVouchers = useCallback(async (query: QueryParams = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (query.page) params.append('page', query.page.toString());
+      if (query.limit) params.append('limit', query.limit.toString());
+      // No default limit here, so the frontend gets all vouchers for its own pagination
+      return await apiCall(`/vouchers${params.toString() ? `?${params.toString()}` : ''}`);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const getVoucher = useCallback(async (id: string) => {
     setLoading(true);
@@ -287,24 +331,25 @@ const getVouchers = useCallback(async (query: QueryParams = {}) => {
     loading,
     error,
     setError,
-    
+
     // Location methods
     createLocation,
     getLocations,
     getLocation,
     updateLocation,
     deleteLocation,
-    
+
     // Data Plan methods
     createDataPlan,
     getDataPlans,
     getDataPlan,
     updateDataPlan,
     deleteDataPlan,
-    
+
     // Voucher methods
     createVoucher,
     createBulkVouchers,
+    uploadVoucherPdf,
     getVouchers,
     getVoucher,
     updateVoucher,
