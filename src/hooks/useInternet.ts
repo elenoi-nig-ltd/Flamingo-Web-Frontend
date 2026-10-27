@@ -11,6 +11,47 @@ interface Location {
   updatedAt: string;
 }
 
+// Add near the top of src/hooks/useInternet.ts
+export interface ErrorInfo {
+  message: string;
+  detail?: string;
+}
+
+/**
+ * Normalize an unknown error into { message, detail }.
+ * `detail` carries the raw/technical message (e.g. validation details from the API)
+ * so the UI can show it in a collapsible/monospace block.
+ */
+export const getErrorInfo = (
+  err: unknown,
+  fallback = 'An unexpected error occurred',
+): ErrorInfo => {
+  if (!err) {
+    return { message: fallback };
+  }
+
+  if (err instanceof Error) {
+    // If the API returned a compound message like "Bad request: plan is required",
+    // split it so the UI can show a short message + detail.
+    const raw = err.message || fallback;
+    const idx = raw.indexOf(':');
+    if (idx > 0 && idx < 60) {
+      const message = raw.slice(0, idx).trim();
+      const detail = raw.slice(idx + 1).trim();
+      if (message && detail) return { message, detail };
+    }
+    return { message: raw };
+  }
+
+  if (typeof err === 'string') {
+    return { message: err };
+  }
+
+  // Fallback for objects with a message field
+  const message =
+    (err as { message?: string }).message ?? fallback;
+  return { message };
+};
 interface DataPlan {
   _id: string;
   dataAmount: number;
@@ -21,6 +62,7 @@ interface DataPlan {
   createdBy: { _id: string; email: string };
   createdAt: string;
   updatedAt: string;
+
 }
 
 interface Voucher {
@@ -279,6 +321,24 @@ export const useInternet = () => {
     [],
   );
 
+  const deleteVouchersBulk = useCallback(
+    async (
+      ids: string[],
+    ): Promise<{ deleted: number; requested: number; message: string }> => {
+      setLoading(true);
+      setError(null);
+      try {
+        return await apiCall('/vouchers/bulk-delete', {
+          method: 'POST',
+          body: JSON.stringify({ ids }),
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
   const getVouchers = useCallback(async (query: QueryParams = {}) => {
     setLoading(true);
     setError(null);
@@ -354,5 +414,6 @@ export const useInternet = () => {
     getVoucher,
     updateVoucher,
     deleteVoucher,
+    deleteVouchersBulk,
   };
 };

@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { useInternet } from '@/hooks/useInternet';
+import { useInternet, getErrorInfo, ErrorInfo } from '@/hooks/useInternet';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaTicketAlt,
@@ -29,6 +29,7 @@ interface VoucherFormData {
 interface FormErrors {
   [key: string]: string | undefined;
   general?: string;
+  generalDetail?: string;
 }
 
 const VoucherManagement = () => {
@@ -42,6 +43,7 @@ const VoucherManagement = () => {
     getDataPlans,
     updateVoucher,
     deleteVoucher,
+    deleteVouchersBulk,
     setError,
   } = useInternet();
 
@@ -62,6 +64,12 @@ const VoucherManagement = () => {
   const [pdfUploadResult, setPdfUploadResult] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Multi-select + bulk delete state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteMode, setBulkDeleteMode] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<ErrorInfo | null>(null);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -76,8 +84,9 @@ const VoucherManagement = () => {
         setVouchers(voucherRes?.data || []);
         setDataPlans(planRes?.data || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load data');
-        toast.error('Failed to load data');
+        const info = getErrorInfo(err, 'Failed to load data');
+        setError(info.detail ? `${info.message} (${info.detail})` : info.message);
+        toast.error(info.message);
       } finally {
         setVouchersLoading(false);
       }
@@ -191,10 +200,9 @@ const VoucherManagement = () => {
       setVouchers(res?.data || []);
       if (!editingVoucher) resetVoucherForm();
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message ||
-                      (err instanceof Error ? err.message : 'Failed to save voucher(s)');
-      setVoucherErrors({ general: errorMsg });
-      toast.error(errorMsg);
+      const info = getErrorInfo(err, 'Failed to save voucher(s)');
+      setVoucherErrors({ general: info.message, generalDetail: info.detail });
+      toast.error(info.message);
     }
   };
 
@@ -212,9 +220,13 @@ const VoucherManagement = () => {
 
       setPdfUploadResult(data);
       setBulkCodes(data.codes || []);
+
+      // Use the server's plain-language summary so the toast and panel always agree
       toast.success(
-        `Created ${data.total_codes} vouchers from PDF` +
-          (data.skipped ? ` (${data.skipped} duplicates skipped)` : ''),
+        (data as any).message ||
+          `Created ${data.total_codes} vouchers from PDF` +
+            (data.skipped ? ` (${data.skipped} duplicates skipped)` : ''),
+        { autoClose: 8000 },
       );
 
       const res = await getVouchers();
@@ -225,9 +237,11 @@ const VoucherManagement = () => {
       setVoucherForm({ plan: '', mode: 'pdf', pdfFile: null });
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err: any) {
-      const errorMsg = err.message || 'Failed to upload and process PDF';
-      setVoucherErrors({ general: errorMsg });
-      toast.error(errorMsg);
+      const info = getErrorInfo(err, 'Failed to upload and process PDF');
+      setVoucherErrors({ general: info.message, generalDetail: info.detail });
+      toast.error(info.detail ? `${info.message}: ${info.detail}` : info.message, {
+        autoClose: 10000,
+      });
     } finally {
       setUploadingPdf(false);
     }
@@ -273,27 +287,92 @@ const VoucherManagement = () => {
     });
   };
 
+  // Selection helpers
+  const currentPageIds = currentVouchers.map((v) => v._id);
+  const allOnPageSelected =
+    currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.has(id));
+  const someOnPageSelected = currentPageIds.some((id) => selectedIds.has(id));
+  const allFilteredSelected =
+    filteredVouchers.length > 0 && filteredVouchers.every((v) => selectedIds.has(v._id));
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectPage = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) currentPageIds.forEach((id) => next.delete(id));
+      else currentPageIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+
+  const selectAllFiltered = () => {
+    setSelectedIds(new Set(filteredVouchers.map((v) => v._id)));
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
   const handleDelete = (id: string) => {
+    setBulkDeleteMode(false);
+    setDeleteError(null);
     setItemToDelete(id);
     setShowDeleteModal(true);
   };
 
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleteMode(true);
+    setDeleteError(null);
+    setItemToDelete(null);
+    setShowDeleteModal(true);
+  };
+
   const confirmDelete = async () => {
+    setDeleting(true);
+    setDeleteError(null);
     try {
-      if (itemToDelete) {
+      if (bulkDeleteMode) {
+        const result = await deleteVouchersBulk(Array.from(selectedIds));
+        const skipped = result.requested - result.deleted;
+        if (skipped > 0) {
+          toast.warn(
+            `${result.deleted} deleted, ${skipped} skipped (already deleted or not found).`,
+          );
+        } else {
+          toast.success(result.message || `${result.deleted} vouchers deleted`);
+        }
+        setSelectedIds(new Set());
+
+      } else if (itemToDelete) {
         await deleteVoucher(itemToDelete);
-        const res = await getVouchers();
-        setVouchers(res?.data || []);
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(itemToDelete);
+          return next;
+        });
         toast.success('Voucher deleted successfully');
       }
+      const res = await getVouchers();
+      setVouchers(res?.data || []);
+
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+      setBulkDeleteMode(false);
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message ||
-                      (err instanceof Error ? err.message : 'Failed to delete voucher');
-      setError(errorMsg);
-      toast.error(errorMsg);
+      // Keep the dialog open and show the failure inside it
+      const info = getErrorInfo(err, 'Failed to delete voucher');
+      setDeleteError(info);
+      toast.error(info.message);
+    } finally {
+      setDeleting(false);
     }
-    setShowDeleteModal(false);
-    setItemToDelete(null);
   };
 
   // Pagination handlers
@@ -560,9 +639,17 @@ const VoucherManagement = () => {
           {/* General Error */}
           {voucherErrors?.general && (
             <div className="md:col-span-2">
-              <p className="text-red-500 dark:text-red-400 text-sm bg-red-50/50 dark:bg-red-900/50 p-4 rounded-xl border border-red-200/50">
-                {voucherErrors.general}
-              </p>
+              <div
+                role="alert"
+                className="text-red-500 dark:text-red-400 text-sm bg-red-50/50 dark:bg-red-900/50 p-4 rounded-xl border border-red-200/50"
+              >
+                <p className="font-medium">{voucherErrors.general}</p>
+                {voucherErrors.generalDetail && (
+                  <p className="mt-1 text-sm opacity-90 break-words">
+                    {voucherErrors.generalDetail}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -609,7 +696,7 @@ const VoucherManagement = () => {
           </div>
         </form>
 
-        {/* PDF Upload Success Message */}
+        {/* PDF Upload Result */}
         <AnimatePresence>
           {pdfUploadResult && (
             <motion.div
@@ -618,22 +705,53 @@ const VoucherManagement = () => {
               exit={{ opacity: 0, y: -20 }}
               className="mb-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-300 dark:border-green-700 rounded-xl"
             >
-              <div className="flex justify-between items-start">
-                <div>
+              <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                <div className="flex-1">
                   <h3 className="text-xl font-bold text-green-800 dark:text-green-200 flex items-center gap-3">
                     <FaCheckCircle className="text-2xl" />
-                    PDF Upload Successful!
+                    PDF processed
                   </h3>
-                  <div className="mt-3 space-y-1 text-green-700 dark:text-green-300">
-                    <p>
-                      Found <strong>{pdfUploadResult.found}</strong> codes,{' '}
-                      <strong>{pdfUploadResult.total_codes}</strong> new
-                      {pdfUploadResult.skipped > 0 && (
-                        <> ({pdfUploadResult.skipped} already existed)</>
-                      )}
-                    </p>
+
+                  {/* Plain-language summary from the server */}
+                  <p className="mt-3 text-green-800 dark:text-green-200">
+                    {pdfUploadResult.message ||
+                      `${pdfUploadResult.total_codes} new vouchers were added from "${pdfUploadResult.filename}".`}
+                  </p>
+
+                  {/* Numbers at a glance */}
+                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                        {pdfUploadResult.total_codes}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Added</p>
+                    </div>
+                    <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-300">
+                        {pdfUploadResult.skipped ?? 0}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Already existed</p>
+                    </div>
+                    <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-gray-700 dark:text-gray-200">
+                        {pdfUploadResult.found}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Unique codes in PDF</p>
+                    </div>
+                    <div className="bg-white/70 dark:bg-gray-800/50 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-gray-700 dark:text-gray-200">
+                        {pdfUploadResult.duplicates_in_pdf ?? 0}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Repeated in PDF</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-1 text-sm text-green-700 dark:text-green-300">
                     <p>File: <strong>{pdfUploadResult.filename}</strong></p>
-                    <p>Plan: <strong>{pdfUploadResult.plan_details?.bundle}</strong> ({pdfUploadResult.plan_details?.dataAmount}GB)</p>
+                    <p>
+                      Plan: <strong>{pdfUploadResult.plan_details?.bundle}</strong>
+                      {' '}({pdfUploadResult.plan_details?.dataAmount}GB, {pdfUploadResult.plan_details?.duration} days)
+                    </p>
                   </div>
                 </div>
                 <motion.button
@@ -735,9 +853,65 @@ const VoucherManagement = () => {
             </div>
           </div>
 
+          {/* Bulk action bar */}
+          <AnimatePresence>
+            {selectedIds.size > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 px-4 py-3 bg-orange-50 dark:bg-orange-900/30 border-b border-orange-200 dark:border-orange-700"
+              >
+                <div className="flex flex-wrap items-center gap-3 text-sm text-orange-800 dark:text-orange-200">
+                  <span className="font-semibold">{selectedIds.size} selected</span>
+                  {!allFilteredSelected && filteredVouchers.length > selectedIds.size && (
+                    <button
+                      type="button"
+                      onClick={selectAllFiltered}
+                      className="underline hover:no-underline"
+                    >
+                      Select all {filteredVouchers.length}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    className="underline hover:no-underline"
+                  >
+                    Clear selection
+                  </button>
+                </div>
+                <motion.button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  disabled={deleting}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl flex items-center space-x-2 text-sm font-medium disabled:opacity-60"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FaTrash />
+                  <span>Delete Selected ({selectedIds.size})</span>
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <table className="w-full text-sm">
             <thead className="bg-gray-50/50 dark:bg-gray-700/50">
               <tr>
+                <th className="py-3 px-4 w-10">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all vouchers on this page"
+                    checked={allOnPageSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someOnPageSelected && !allOnPageSelected;
+                    }}
+                    onChange={toggleSelectPage}
+                    disabled={currentVouchers.length === 0}
+                    className="h-4 w-4 accent-[#f58c55] cursor-pointer"
+                  />
+                </th>
                 <th className="py-3 px-4 text-left font-semibold">Code</th>
                 <th className="py-3 px-4 text-left font-semibold">Plan</th>
                 <th className="py-3 px-4 text-left font-semibold">Status</th>
@@ -766,10 +940,21 @@ const VoucherManagement = () => {
               {currentVouchers.map((voucher) => (
                 <motion.tr
                   key={voucher._id}
-                  className="border-b hover:bg-orange-50/50 dark:hover:bg-orange-900/20"
+                  className={`border-b hover:bg-orange-50/50 dark:hover:bg-orange-900/20 ${
+                    selectedIds.has(voucher._id) ? 'bg-orange-50/70 dark:bg-orange-900/30' : ''
+                  }`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
+                  <td className="py-4 px-4 w-10">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select voucher ${voucher.code}`}
+                      checked={selectedIds.has(voucher._id)}
+                      onChange={() => toggleSelectOne(voucher._id)}
+                      className="h-4 w-4 accent-[#f58c55] cursor-pointer"
+                    />
+                  </td>
                   <td className="py-4 px-4">
                     <code className="bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full font-mono">
                       {voucher.code}
@@ -909,8 +1094,24 @@ const VoucherManagement = () => {
                   <FaTrash /> Confirm Delete
                 </h3>
                 <p className="text-gray-700 dark:text-gray-300 mb-6">
-                  Are you sure you want to delete this voucher? This action cannot be undone.
+                  {bulkDeleteMode
+                    ? `Are you sure you want to delete ${selectedIds.size} selected voucher${selectedIds.size !== 1 ? 's' : ''}? This action cannot be undone.`
+                    : 'Are you sure you want to delete this voucher? This action cannot be undone.'}
                 </p>
+                {deleteError && (
+                  <div
+                    role="alert"
+                    className="mb-6 p-4 bg-red-50 dark:bg-red-900/40 border border-red-300 dark:border-red-700 rounded-lg text-sm"
+                  >
+                    <p className="font-semibold text-red-700 dark:text-red-300">Delete failed</p>
+                    <p className="mt-1 text-red-700 dark:text-red-200">{deleteError.message}</p>
+                    {deleteError.detail && (
+                      <p className="mt-2 text-xs font-mono text-red-600 dark:text-red-300 opacity-80 break-all">
+                        {deleteError.detail}
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={() => setShowDeleteModal(false)}
@@ -920,9 +1121,11 @@ const VoucherManagement = () => {
                   </button>
                   <button
                     onClick={confirmDelete}
-                    className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                    disabled={deleting}
+                    className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    Delete Voucher
+                    {deleting && <FaSpinner className="animate-spin" />}
+                    {bulkDeleteMode ? `Delete ${selectedIds.size} Vouchers` : 'Delete Voucher'}
                   </button>
                 </div>
               </motion.div>
