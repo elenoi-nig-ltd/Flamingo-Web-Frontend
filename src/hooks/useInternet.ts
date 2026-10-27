@@ -110,16 +110,25 @@ export interface PdfUploadResult {
 
 const extractErrorMessage = (errorData: any, status?: number): string => {
   if (status === 401) return 'Unauthorized access';
-  if (typeof errorData === 'string') return errorData;
-  if (errorData instanceof Error) return errorData.message;
 
-  if (errorData?.message) {
-    return Array.isArray(errorData.message)
-      ? errorData.message.join(', ')
-      : errorData.message;
-  }
+  // Digs the readable text out of strings, arrays and nested { message: { message } } objects
+  const pick = (value: any, depth = 0): string | null => {
+    if (value == null || depth > 4) return null;
+    if (typeof value === 'string') return value;
+    if (value instanceof Error) return value.message;
+    if (Array.isArray(value)) {
+      const parts = value
+        .map((v) => pick(v, depth + 1))
+        .filter((v): v is string => Boolean(v));
+      return parts.length ? parts.join(', ') : null;
+    }
+    if (typeof value === 'object') {
+      return pick(value.message, depth + 1) ?? pick(value.error, depth + 1);
+    }
+    return null;
+  };
 
-  return 'An unexpected error occurred';
+  return pick(errorData) ?? 'An unexpected error occurred';
 };
 
 const apiCall = async (endpoint: string, options: RequestInit = {}) => {
